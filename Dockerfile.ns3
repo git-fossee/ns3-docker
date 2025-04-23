@@ -10,7 +10,7 @@ WORKDIR $HOME
 ######### Customize Container Here ###########
 
 # Install dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     g++ \
     python3 \
     cmake \
@@ -64,17 +64,16 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /home/kasm-user/Desktop /home/kasm-user/Uploads
-
-# Create a file on the desktop
-RUN touch $HOME/Desktop/hello.txt
-
-# Download, extract and install ns-3.38 and NetAnim
-RUN wget -O $HOME/ns-allinone-3.38.tar.bz2 https://www.nsnam.org/releases/ns-allinone-3.38.tar.bz2 && \
+# Setup directories and download ns-3
+RUN mkdir -p /home/kasm-user/Desktop /home/kasm-user/Uploads && \
+    touch $HOME/Desktop/hello.txt && \
+    wget --progress=dot:giga -O $HOME/ns-allinone-3.38.tar.bz2 https://www.nsnam.org/releases/ns-allinone-3.38.tar.bz2 && \
     tar -xjf $HOME/ns-allinone-3.38.tar.bz2 -C $HOME && \
-    rm $HOME/ns-allinone-3.38.tar.bz2 && \
-    cd $HOME/ns-allinone-3.38 && \
-    ./build.py && \
+    rm $HOME/ns-allinone-3.38.tar.bz2
+
+# Build ns-3 and NetAnim
+WORKDIR $HOME/ns-allinone-3.38
+RUN ./build.py && \
     hg clone http://code.nsnam.org/netanim && \
     cd netanim && \
     qmake NetAnim.pro && \
@@ -82,8 +81,9 @@ RUN wget -O $HOME/ns-allinone-3.38.tar.bz2 https://www.nsnam.org/releases/ns-all
 
 ######### End Customizations ###########
 
-RUN chown 1000:0 $HOME
-RUN $STARTUPDIR/set_user_permission.sh $HOME
+WORKDIR $HOME
+RUN chown 1000:0 $HOME && \
+    $STARTUPDIR/set_user_permission.sh $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
@@ -92,6 +92,6 @@ RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 USER 1000
 
 # Set up environment for ns-3
-RUN echo 'export PATH=$HOME/ns-allinone-3.38/bin:$PATH' >> $HOME/.bashrc && \
-    echo 'export LD_LIBRARY_PATH=$HOME/ns-allinone-3.38/lib:$LD_LIBRARY_PATH' >> $HOME/.bashrc && \
-    echo 'export PYTHONPATH=$HOME/ns-allinone-3.38/lib/python3.8/site-packages:$PYTHONPATH' >> $HOME/.bashrc
+RUN echo "export PATH=$HOME/ns-allinone-3.38/bin:$PATH" >> $HOME/.bashrc && \
+    echo "export LD_LIBRARY_PATH=$HOME/ns-allinone-3.38/lib:$LD_LIBRARY_PATH" >> $HOME/.bashrc && \
+    echo "export PYTHONPATH=$HOME/ns-allinone-3.38/lib/python3.8/site-packages:$PYTHONPATH" >> $HOME/.bashrc

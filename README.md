@@ -99,10 +99,10 @@ This container includes:
 
 This repository includes an automated GitHub Actions workflow that:
 
-1. Builds both Docker images on every push and pull request
+1. Builds the Docker image on every push and pull request
 2. Runs Hadolint to check Dockerfile best practices
 3. Scans for vulnerabilities using Trivy
-4. Publishes the images to GitHub Container Registry (on main branch)
+4. Publishes the image to GitHub Container Registry (on main branch)
 5. Creates versioned tags for releases
 
 ## Documentation
