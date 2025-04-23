@@ -2,22 +2,19 @@ FROM kasmweb/core-ubuntu-focal:1.15.0
 
 USER root
 
-# Fix ENV format to avoid Hadolint warnings
-ENV HOME=/home/kasm-default-profile
-ENV STARTUPDIR=/dockerstartup
-ENV INST_SCRIPTS=$STARTUPDIR/install
+ENV HOME /home/kasm-default-profile
+ENV STARTUPDIR /dockerstartup
+ENV INST_SCRIPTS $STARTUPDIR/install
 WORKDIR $HOME
 
 ######### Customize Container Here ###########
 
-# Install dependencies - grouped into a single RUN command to reduce layers
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install dependencies
+RUN apt-get update && apt-get install -y \
     g++ \
     python3 \
-    python3-dev \
     cmake \
     ninja-build \
-    make \
     git \
     gir1.2-goocanvas-2.0 \
     python3-gi \
@@ -31,7 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sqlite3 \
     libsqlite3-dev \
     qtbase5-dev \
-    qt5-default \
     qtchooser \
     qt5-qmake \
     qtbase5-dev-tools \
@@ -43,7 +39,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     graphviz \
     imagemagick \
     python3-sphinx \
-    python3-pip \
     dia \
     texlive \
     dvipng \
@@ -66,44 +61,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bridge-utils \
     libboost-all-dev \
     mercurial \
-    wget \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Create necessary directories
 RUN mkdir -p /home/kasm-user/Desktop /home/kasm-user/Uploads
 
 # Create a file on the desktop
 RUN touch $HOME/Desktop/hello.txt
 
-# Download and extract ns-3.38
+# Download, extract and install ns-3.38 and NetAnim
 RUN wget -O $HOME/ns-allinone-3.38.tar.bz2 https://www.nsnam.org/releases/ns-allinone-3.38.tar.bz2 && \
     tar -xjf $HOME/ns-allinone-3.38.tar.bz2 -C $HOME && \
-    rm $HOME/ns-allinone-3.38.tar.bz2
-
-# Build NS-3 with error handling - note the proper format for forwarding options
-RUN cd $HOME/ns-allinone-3.38/ns-3.38 && \
-    ./ns3 configure --enable-examples --enable-tests -- --disable-python --disable-documentation && \
-    ./ns3 build
-
-# Download and build NetAnim
-RUN cd $HOME && \
+    rm $HOME/ns-allinone-3.38.tar.bz2 && \
+    cd $HOME/ns-allinone-3.38 && \
+    ./build.py && \
     hg clone http://code.nsnam.org/netanim && \
     cd netanim && \
-    /usr/lib/qt5/bin/qmake NetAnim.pro && \
+    qmake NetAnim.pro && \
     make
-
-# Create a shortcut script for ns3 command
-RUN echo '#!/bin/bash' > /usr/local/bin/ns3 && \
-    echo 'cd $HOME/ns-allinone-3.38/ns-3.38 && ./ns3 "$@"' >> /usr/local/bin/ns3 && \
-    chmod +x /usr/local/bin/ns3
 
 ######### End Customizations ###########
 
 RUN chown 1000:0 $HOME
 RUN $STARTUPDIR/set_user_permission.sh $HOME
 
-ENV HOME=/home/kasm-user
+ENV HOME /home/kasm-user
 WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
@@ -113,11 +95,3 @@ USER 1000
 RUN echo 'export PATH=$HOME/ns-allinone-3.38/bin:$PATH' >> $HOME/.bashrc && \
     echo 'export LD_LIBRARY_PATH=$HOME/ns-allinone-3.38/lib:$LD_LIBRARY_PATH' >> $HOME/.bashrc && \
     echo 'export PYTHONPATH=$HOME/ns-allinone-3.38/lib/python3.8/site-packages:$PYTHONPATH' >> $HOME/.bashrc
-
-# Create a desktop shortcut to NS-3 documentation
-RUN echo "[Desktop Entry]\n\
-Type=Link\n\
-Name=NS-3 Documentation\n\
-Icon=text-html\n\
-URL=https://www.nsnam.org/documentation/" > $HOME/Desktop/ns3-docs.desktop && \
-chmod +x $HOME/Desktop/ns3-docs.desktop

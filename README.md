@@ -1,7 +1,7 @@
 # NS-3 Docker Container
 
-[![Build and Publish Docker Image](https://github.com/OWNER/REPO/actions/workflows/docker-build.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/docker-build.yml)
-[![Docker Image Size](https://img.shields.io/docker/image-size/OWNER/ns3-container?logo=docker)](https://github.com/OWNER/REPO/pkgs/container/ns3-container)
+[![Build and Publish Docker Image](https://github.com/git-fossee/ns3-docker/actions/workflows/docker-build.yml/badge.svg)](https://github.com/git-fossee/ns3-docker/actions/workflows/docker-build.yml)
+[![Docker Image Size](https://img.shields.io/docker/image-size/git-fossee/ns3-container?logo=docker)](https://github.com/git-fossee/ns3-docker/pkgs/container/ns3-container)
 
 This Docker container provides a ready-to-use Network Simulator 3 (ns-3.38) environment with a browser-accessible desktop via Kasm Workspaces.
 
@@ -19,27 +19,21 @@ This Docker container provides a ready-to-use Network Simulator 3 (ns-3.38) envi
 
 ```bash
 # Pull the latest image from GitHub Container Registry
-docker pull ghcr.io/OWNER/ns3-container:latest
-
-# Alternative build (using different build method)
-docker pull ghcr.io/OWNER/ns3-container-alt:latest
+docker pull ghcr.io/git-fossee/ns3-container:latest
 ```
 
 ### Building the Container Locally
 
 ```bash
-# Main version
+# Build the container
 docker build -t ns3-container -f Dockerfile.ns3 .
-
-# Alternative version
-docker build -t ns3-container-alt -f Dockerfile.ns3.alt .
 ```
 
 ### Running the Container
 
 ```bash
 # Using the pre-built image
-docker run --rm -it -p 6901:6901 ghcr.io/OWNER/ns3-container:latest
+docker run --rm -it -p 6901:6901 ghcr.io/git-fossee/ns3-container:latest
 
 # Or using a locally built image
 docker run --rm -it -p 6901:6901 ns3-container
@@ -71,14 +65,35 @@ ns3 --help
 
 NS-3 is located at `/home/kasm-user/ns-allinone-3.38/ns-3.38/`
 
+### Environment Configuration
+
+The container automatically sets up the following environment variables in `.bashrc`:
+```bash
+export PATH=$HOME/ns-allinone-3.38/bin:$PATH
+export LD_LIBRARY_PATH=$HOME/ns-allinone-3.38/lib:$LD_LIBRARY_PATH
+export PYTHONPATH=$HOME/ns-allinone-3.38/lib/python3.8/site-packages:$PYTHONPATH
+```
+
 ## Build Options
 
-This repository provides two different Dockerfile options:
+This repository provides an NS-3 Docker environment:
 
 1. **Dockerfile.ns3** - Uses direct NS-3 commands for building
-2. **Dockerfile.ns3.alt** - Uses a modified version of the build.py script 
 
-Both versions disable Python bindings and documentation to simplify the build process and reduce errors.
+## NS-3 Features Included
+
+This container includes:
+
+- Core NS-3.38 simulation environment
+- NetAnim for network visualization
+- Examples and test suites enabled
+- Support for common network protocols and technologies:
+  - Wi-Fi
+  - LTE
+  - TCP/IP
+  - 5G
+  - IoT
+  - And more!
 
 ## CI/CD Pipeline
 
@@ -94,4 +109,6 @@ This repository includes an automated GitHub Actions workflow that:
 
 For more information about NS-3, visit:
 - [NS-3 Official Website](https://www.nsnam.org/)
-- [NS-3 Documentation](https://www.nsnam.org/documentation/) 
+- [NS-3 Documentation](https://www.nsnam.org/documentation/)
+- [NS-3 Tutorials](https://www.nsnam.org/docs/tutorial/html/)
+- [NS-3 Manual](https://www.nsnam.org/docs/manual/html/) 
