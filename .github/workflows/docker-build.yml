@@ -25,11 +25,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Run Hadolint for Dockerfile linting
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ${{ env.DOCKERFILE }}
+
+      # Run Trivy filesystem scan (scan the Dockerfile and context)
+      - name: Run Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      # Upload Trivy scan results to GitHub Security tab
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
       # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Login to GitHub Container Registry
+      # Login to GitHub Container Registry (for pushes only)
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
@@ -51,12 +73,6 @@ jobs:
             type=ref,event=pr
             type=sha,format=short
 
-      # Run Hadolint
-      - name: Run Hadolint
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: ${{ env.DOCKERFILE }}
-
       # Build and push Docker image
       - name: Build and push Docker image
         id: docker_build
@@ -68,27 +84,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: ${{ github.event_name == 'pull_request' }}
-
-      # Save the image locally for scanning if it's a PR
-      - name: Save image for local scanning
-        if: github.event_name == 'pull_request'
-        run: |
-          IMAGE_ID=$(docker images --format "{{.ID}}" | head -n 1)
-          docker tag $IMAGE_ID ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      # Run Trivy vulnerability scanner
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      # Upload Trivy scan results to GitHub Security tab
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif' 
+          cache-to: type=gha,mode=max 
