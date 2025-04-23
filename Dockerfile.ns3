@@ -10,6 +10,7 @@ WORKDIR $HOME
 ######### Customize Container Here ###########
 
 # Install dependencies
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install --no-install-recommends -y \
     g++ \
     python3 \
@@ -74,9 +75,11 @@ RUN mkdir -p /home/kasm-user/Desktop /home/kasm-user/Uploads && \
 # Build ns-3 and NetAnim
 WORKDIR $HOME/ns-allinone-3.38
 RUN ./build.py && \
-    hg clone http://code.nsnam.org/netanim && \
-    cd netanim && \
-    qmake NetAnim.pro && \
+    hg clone http://code.nsnam.org/netanim
+
+# Build NetAnim
+WORKDIR $HOME/ns-allinone-3.38/netanim
+RUN qmake NetAnim.pro && \
     make
 
 ######### End Customizations ###########
